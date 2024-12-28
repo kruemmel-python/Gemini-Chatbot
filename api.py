@@ -2,8 +2,9 @@ import os
 import google.generativeai as genai
 import gradio as gr
 
-# Konfigurieren Sie den API-Schlüssel
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+# Ersetzen Sie 'GEMINI_API_KEY' durch Ihren tatsächlichen API-Schlüssel
+api_key = 'GEMINI_API_KEY'
+genai.configure(api_key=api_key)
 
 def upload_to_gemini(path, mime_type=None):
     """Lädt die angegebene Datei zu Gemini hoch.
