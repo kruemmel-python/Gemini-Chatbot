@@ -2,6 +2,11 @@
 
 Dieses Projekt ist ein einfacher Chatbot, der die Gemini-2.0-Flash-Exp-Modell von Google Generative AI verwendet. Der Chatbot ist mit Gradio erstellt, einer benutzerfreundlichen Bibliothek zum Erstellen von Benutzeroberflächen für maschinelle Lernmodelle.
 
+https://deepmind.google/technologies/gemini/flash/
+
+![image](https://github.com/user-attachments/assets/5c2d7123-1f75-4350-9bea-420e34ae6e00)
+
+
 ## Inhalt
 
 - [Installation](#installation)
@@ -43,6 +48,9 @@ Um den Chatbot zu verwenden, benötigen Sie einen API-Schlüssel von Google AI S
 
 2. Öffnen Sie Ihren Webbrowser und navigieren Sie zu `http://localhost:7860`, um die Benutzeroberfläche zu sehen.
 3. Geben Sie Ihre Nachricht in das Textfeld ein und klicken Sie auf "Send", um mit dem Chatbot zu interagieren.
+![image](https://github.com/user-attachments/assets/9e581585-93b6-4dc6-b7db-c9605d97bc05)
+
+![image](https://github.com/user-attachments/assets/e5786428-da16-47ce-9f22-e57eddba126e)
 
 ## Lizenz
 
