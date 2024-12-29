@@ -8,7 +8,7 @@ import io
 app = Flask(__name__)
 
 # Ersetzen Sie 'GEMINI_API_KEY' durch Ihren tatsächlichen API-Schlüssel
-api_key = 'AIzaSyCQ0xd71zVQgtIBHTl6MfOrs3KKQTStySU'
+api_key = 'YOUR KEY'
 genai.configure(api_key=api_key)
 
 # Create the model
