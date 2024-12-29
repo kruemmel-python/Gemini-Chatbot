@@ -1,72 +1,91 @@
 import os
+from flask import Flask, render_template, request, jsonify
 import google.generativeai as genai
 import gradio as gr
+from PIL import Image
+import io
+
+app = Flask(__name__)
 
 # Ersetzen Sie 'GEMINI_API_KEY' durch Ihren tatsächlichen API-Schlüssel
-api_key = 'GEMINI_API_KEY'
+api_key = 'AIzaSyCQ0xd71zVQgtIBHTl6MfOrs3KKQTStySU'
 genai.configure(api_key=api_key)
 
-def upload_to_gemini(path, mime_type=None):
-    """Lädt die angegebene Datei zu Gemini hoch.
-
-    Siehe https://ai.google.dev/gemini-api/docs/prompting_with_media
-    """
-    file = genai.upload_file(path, mime_type=mime_type)
-    print(f"Uploaded file '{file.display_name}' as: {file.uri}")
-    return file
-
-# Erstellen Sie das Modell
+# Create the model
 generation_config = {
     "temperature": 1,
     "top_p": 0.95,
-    "top_k": 64,
+    "top_k": 40,  # Angepasster Wert für top_k
     "max_output_tokens": 8192,
     "response_mime_type": "text/plain",
 }
 
 model = genai.GenerativeModel(
-    model_name="gemini-2.0-flash-thinking-exp-1219",
+    model_name="gemini-2.0-flash-exp",
     generation_config=generation_config,
 )
 
-# Initialisieren Sie den Chat-Verlauf
-chat_history = []
+def upload_to_gemini(image):
+    # Speichern Sie das Bild temporär
+    image_path = "temp_image.jpg"
+    image.save(image_path)
 
-def chat_with_gemini(user_input, image, history):
-    global chat_history
-    # Stellen Sie sicher, dass die Benutzereingabe nicht leer ist
-    if not user_input.strip():
-        return history, "Bitte geben Sie eine Nachricht ein."
+    # Laden Sie das Bild in die Gemini API hoch
+    sample_file = genai.upload_file(path=image_path, display_name="Uploaded Image")
+    print(f"Uploaded file '{sample_file.display_name}' as: {sample_file.uri}")
 
-    # Laden Sie das Bild hoch, falls vorhanden
+    # Löschen Sie die temporäre Datei
+    os.remove(image_path)
+
+    return sample_file
+
+def chat_with_gemini(user_input, image=None):
+    history = [
+        {
+            "role": "user",
+            "parts": [
+                user_input,
+            ],
+        },
+    ]
+
     if image:
-        file = upload_to_gemini(image.name, mime_type=image.type)
-        chat_history.append({"role": "user", "parts": [file, user_input]})
-    else:
-        chat_history.append({"role": "user", "parts": [user_input]})
+        sample_file = upload_to_gemini(image)
+        history[0]["parts"].append(sample_file)
 
-    # Senden Sie den Chat-Verlauf an das Modell
-    response = model.generate_content(chat_history)
+    chat_session = model.start_chat(history=history)
+    response = chat_session.send_message(user_input)
+    return response.text
 
-    # Fügen Sie die Modellantwort zum Chat-Verlauf hinzu
-    chat_history.append({"role": "model", "parts": [response.text]})
-
-    # Aktualisieren Sie die Anzeige des Chat-Verlaufs
-    history.append((user_input, response.text))
-    return history, ""
+def analyze_image(image):
+    sample_file = upload_to_gemini(image)
+    response = model.generate_content(["Beschreiben Sie das Bild mit einer kreativen Beschreibung. Bitte in German antworten.", sample_file])
+    return response.text
 
 # Gradio-Benutzeroberfläche
 with gr.Blocks() as demo:
-    gr.Markdown("## Gemini Chatbot")
-    chatbot = gr.Chatbot()
+    gr.Markdown("## Gemini Chatbot with Image Analysis")
     with gr.Row():
         with gr.Column():
             user_input = gr.Textbox(label="Enter your message", placeholder="Type your message here...")
-            image_input = gr.File(label="Upload an image", type="file")
+            image_upload = gr.Image(type="pil", label="Upload an image")
             submit_btn = gr.Button("Send")
+        response = gr.Textbox(label="Response", interactive=False)
 
-    submit_btn.click(fn=chat_with_gemini, inputs=[user_input, image_input, chatbot], outputs=[chatbot, user_input])
+    submit_btn.click(fn=chat_with_gemini, inputs=[user_input, image_upload], outputs=response)
+
+    with gr.Row():
+        analyze_btn = gr.Button("Analyze Image")
+        image_analysis = gr.Textbox(label="Image Analysis", interactive=False)
+
+    analyze_btn.click(fn=analyze_image, inputs=image_upload, outputs=image_analysis)
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    return render_template('index.html')
 
 if __name__ == '__main__':
     # Starten Sie die Gradio-Benutzeroberfläche
     demo.launch(share=True, server_name="0.0.0.0", server_port=7860)
+    # Starten Sie die Flask-Anwendung
+    app.run(debug=True, port=5000)
