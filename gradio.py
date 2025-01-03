@@ -4,7 +4,7 @@ import gradio as gr
 from PIL import Image
 
 # Ersetzen Sie 'GEMINI_API_KEY' durch Ihren tatsächlichen API-Schlüssel
-api_key = 'YOUR KEY'
+api_key = 'AIzaSyCQ0xd71zVQgtIBHTl6MfOrs3KKQTStySU'
 genai.configure(api_key=api_key)
 
 # Create the model
@@ -53,8 +53,16 @@ def chat_with_gemini(user_input, image=None):
         history[0]["parts"].append(sample_file)
 
     chat_session = model.start_chat(history=history)
-    response = chat_session.send_message(user_input)
-    return response.text
+    response_text = chat_session.send_message(user_input).text
+
+    # Extrahiere den Python-Code aus der Antwort
+    if "```python" in response_text and "```" in response_text:
+        start_index = response_text.find("```python") + 9
+        end_index = response_text.find("```", start_index)
+        python_code = response_text[start_index:end_index].strip()
+        return python_code
+    else:
+        return response_text
 
 def analyze_image(image):
     if image is None:
@@ -62,7 +70,16 @@ def analyze_image(image):
 
     sample_file = upload_to_gemini(image)
     response = model.generate_content(["Beschreiben Sie das Bild mit einer kreativen Beschreibung. Bitte in German antworten.", sample_file])
-    return response.text
+    response_text = response.text
+
+    # Extrahiere den Python-Code aus der Antwort
+    if "```python" in response_text and "```" in response_text:
+        start_index = response_text.find("```python") + 9
+        end_index = response_text.find("```", start_index)
+        python_code = response_text[start_index:end_index].strip()
+        return python_code
+    else:
+        return response_text
 
 # Gradio-Benutzeroberfläche
 with gr.Blocks() as demo:
@@ -72,13 +89,13 @@ with gr.Blocks() as demo:
             user_input = gr.Textbox(label="Geben Sie Ihre Nachricht ein", placeholder="Geben Sie hier Ihre Nachricht ein...")
             image_upload = gr.Image(type="pil", label="Bild hochladen")
             submit_btn = gr.Button("Senden")
-        response = gr.Textbox(label="Antwort", interactive=False)
+        response = gr.Code(label="Antwort", language="python", interactive=False)
 
     submit_btn.click(fn=chat_with_gemini, inputs=[user_input, image_upload], outputs=response)
 
     with gr.Row():
         analyze_btn = gr.Button("Bild analysieren")
-        image_analysis = gr.Textbox(label="Bildanalyse", interactive=False)
+        image_analysis = gr.Code(label="Bildanalyse", language="python", interactive=False)
 
     analyze_btn.click(fn=analyze_image, inputs=image_upload, outputs=image_analysis)
 
